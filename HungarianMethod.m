@@ -2,6 +2,8 @@ classdef HungarianMethod
     properties
         %сама матрица
         matrix 
+        %матрица для вывода
+        cost
         %для строк без +
         rows 
         %для столбцов без +
@@ -24,6 +26,7 @@ classdef HungarianMethod
          %конструктор класса
          function obj = HungarianMethod(m, maxFlag, debugFlag)
             obj.matrix = m;
+            obj.cost = m;
             obj.marked = [];
             obj.smarked = [];
             obj.count = 0;
@@ -51,7 +54,7 @@ classdef HungarianMethod
                  end 
              else
                  if obj.debug 
-                     fprintf("Исхрдная матрица: \n")
+                     fprintf("Исходная матрица: \n")
                      obj.printMatrix();
                      fprintf("\n");
                  end 
@@ -107,6 +110,10 @@ classdef HungarianMethod
             obj.marked(1, :) = [];
             obj.count = 1;
             
+             if obj.debug
+                    fprintf("Итерация %d \n", obj.count);
+                    obj.printIteration();
+             end
         end
         
        %создание альтернативной системы независимых нулей
@@ -118,9 +125,8 @@ classdef HungarianMethod
                 obj.count = obj.count + 1;
                 
                 if obj.debug
-                    fprintf("Итерация %d \n", obj.count)
-                    obj.printIteration()
-                    
+                    fprintf("Итерация %d \n", obj.count);
+                    obj.printIteration();
                 end
                 
                 %заполнение отметок
@@ -140,6 +146,7 @@ classdef HungarianMethod
                 [obj, flags, zi, zj] = obj.isNull();
                 
                 while true 
+                    obj.count = obj.count + 1;
                     %если есть неотмеченный ноль
                     if flags
                         obj.smarked = [obj.smarked; [zi, zj]];
@@ -150,6 +157,11 @@ classdef HungarianMethod
                         if f == true
                             obj.rows = [obj.rows; zi ];
                             obj.cols(obj.cols == dc) = [];
+                            
+                            if obj.debug
+                                fprintf("Итерация %d \n", obj.count);
+                                obj.printIteration();
+                            end
                         else
                             %если нет, строим L-цепочку
                             obj = obj.Lchain();
@@ -166,6 +178,10 @@ classdef HungarianMethod
                             obj.cols = [];
                             obj.rows = [];
                             
+                            if obj.debug
+                                fprintf("Итерация %d \n", obj.count);
+                                obj.printIteration();
+                            end
                             break;
                         end
                         [obj, flags, zi, zj] = obj.isNull();
@@ -173,9 +189,13 @@ classdef HungarianMethod
                     %если нет неотмеченных нулей
                     obj = obj.makeNulls();
                     
-                    [obj, flags, zi, zj] = obj.isNull();
+                    if obj.debug
+                        fprintf("Итерация %d \n", obj.count);
+                        obj.printIteration();
                     end
                     
+                    [obj, flags, zi, zj] = obj.isNull();
+                    end                
                    
                 end
                 
@@ -360,16 +380,21 @@ classdef HungarianMethod
                 obj = obj.alternate_coverage();
             end
             
+            opt = 0;
+            
+            fprintf("\n");
             for i = 1:length(obj.matrix)
                 for j = 1:length(obj.matrix)
                     if ismember([i,j],obj.marked, 'rows')
                          fprintf("%d  ", 1)
+                         opt = opt + obj.cost(i,j);
                     else
                          fprintf("%d  ", 0)
                     end
                 end
                 fprintf("\n");
             end
+            fprintf("Решение f_opt = %d \n", opt);
             
         end
     end
